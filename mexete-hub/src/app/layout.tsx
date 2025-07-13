@@ -20,6 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+      </head>
       <body
         className={`${clashDisplay.variable} ${clashDisplayBold.variable} ${clashDisplayMedium.variable} ${clashDisplaySemiBold.variable} ${clashDisplayLight.variable} antialiased`}
       >
