@@ -1,6 +1,15 @@
+"use server";
+
 import { formSchema } from "./schema";
 
-export async function submitWaitlistForm(data: FormData): Promise<{ message: string }> {
+type FormState = {
+  message: string;
+};
+
+export async function submitWaitlistForm(
+  prevState: FormState,
+  data: FormData
+): Promise<FormState> {
   const formData = Object.fromEntries(data);
   const parsed = formSchema.safeParse(formData);
 
@@ -15,7 +24,7 @@ export async function submitWaitlistForm(data: FormData): Promise<{ message: str
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_ROUTER_API_KEY}`,
+          Authorization: `Bearer ${process.env.ROUTER_API_KEY}`,
         },
         body: JSON.stringify(parsed.data),
       }
@@ -26,7 +35,7 @@ export async function submitWaitlistForm(data: FormData): Promise<{ message: str
     }
 
     return { message: "Message sent successfully!" };
-  } catch {
+  } catch (error) {
     return { message: "Failed to submit form. Please try again." };
   }
 }
