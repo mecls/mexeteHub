@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useActionState, useRef, useTransition } from "react";
+import { useForm, ControllerRenderProps } from "react-hook-form";
+import { useRef, useState } from "react";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,9 +21,8 @@ import { formSchema } from "./schema";
 type FormValues = z.infer<typeof formSchema>;
 
 export function WaitlistForm() {
-  const [state, formAction] = useActionState(submitWaitlistForm, {
-    message: "",
-  });
+  const [message, setMessage] = useState("");
+  const [isPending, setIsPending] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -32,24 +31,34 @@ export function WaitlistForm() {
     },
   });
 
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    startTransition(() => {
-      formAction(new FormData(formRef.current!));
-      form.reset();
-    });
+    setIsPending(true);
+    setMessage("");
+    
+    try {
+      const formData = new FormData(event.currentTarget);
+      const result = await submitWaitlistForm(formData);
+      setMessage(result.message);
+      if (result.message === "Message sent successfully!") {
+        form.reset();
+      }
+    } catch {
+      setMessage("Failed to submit form. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const formRef = useRef<HTMLFormElement>(null);
-  const [isPending, startTransition] = useTransition();
 
   return (
     <div className="max-w-md w-full mx-auto space-y-6">
       <div className="space-y-2 text-center">
 
-        {state.message && (
+        {message && (
           <div className="inline-block px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-            {state.message}
+            {message}
           </div>
         )}
       </div>
@@ -57,14 +66,13 @@ export function WaitlistForm() {
       <Form {...form}>
         <form
           ref={formRef}
-          action={formAction}
           onSubmit={onSubmit}
           className="space-y-6"
         >
           <FormField
             control={form.control}
             name="email"
-            render={({ field }: { field: any }) => (
+            render={({ field }: { field: ControllerRenderProps<FormValues, "email"> }) => (
               <FormItem>
                 <FormLabel className="text-muted-foreground items-center justify-center">Email</FormLabel>
                 <FormControl>
