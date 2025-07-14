@@ -1,31 +1,31 @@
 import localFont from 'next/font/local'
 
-export const clashDisplay = localFont({
-  src: './ClashDisplay-Regular.ttf',
+export const inter = localFont({
+  src: './Inter_18pt-Regular.ttf',
   display: 'swap',
-  variable: '--font-clash-display',
+  variable: '--font-inter',
 })
 
-export const clashDisplayBold = localFont({
-  src: './ClashDisplay-Bold.ttf',
+export const interBold = localFont({
+  src: './Inter_18pt-Bold.ttf',
   display: 'swap',
-  variable: '--font-clash-display-bold',
+  variable: '--font-inter-bold',
 })
 
-export const clashDisplayMedium = localFont({
-  src: './ClashDisplay-Medium.ttf',
+export const interMedium = localFont({
+  src: './Inter_18pt-Medium.ttf',
   display: 'swap',
-  variable: '--font-clash-display-medium',
+  variable: '--font-inter-medium',
 })
 
-export const clashDisplaySemiBold = localFont({
-  src: './ClashDisplay-Semibold.ttf',
+export const interSemiBold = localFont({
+  src: './Inter_18pt-SemiBold.ttf',
   display: 'swap',
-  variable: '--font-clash-display-semi-bold',
+  variable: '--font-inter-semi-bold',
 })
 
-export const clashDisplayLight = localFont({
-  src: './ClashDisplay-Light.ttf',
+export const interLight = localFont({
+  src: './Inter_18pt-Light.ttf',
   display: 'swap',
-  variable: '--font-clash-display-light',
+  variable: '--font-inter-light',
 })
