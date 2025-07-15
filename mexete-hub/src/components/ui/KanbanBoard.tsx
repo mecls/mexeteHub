@@ -194,7 +194,7 @@ const KanbanColumn = ({ column, tasks }: { column: Column; tasks: Task[] }) => {
     <div
       ref={setNodeRef}
       style={style}
-      className={`${column.bgcolor} rounded-sm p-3 w-full h-[350px] max-h-[500px] flex flex-col`}
+      className={`${column.bgcolor} rounded-sm p-3 w-full h-[350px] max-h-[600px] flex flex-col`}
     >
       <div
         {...attributes}

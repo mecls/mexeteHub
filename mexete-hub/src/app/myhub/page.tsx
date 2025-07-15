@@ -53,17 +53,18 @@ const myHub = () => {
                                         </div>
                                         <div className="flex items-center justify-center">
                                             <span className="hidden group-hover:inline-flex">
-                                                <Image src="/icons/ellipsis-sidebar.svg" className="bg-gray-100" alt="ellipsis" width={12} height={12} />
+                                                <Image src="/icons/ellipsis-sidebar.svg" className="bg-gray-100" alt="ellipsis" width={18} height={18} />
                                             </span>
                                         </div>
                                     </div>
                                     <div className="group flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-gray-100 ">
                                         <div className="flex items-center gap-2">
-                                            <h1 className="text-xs font-semibold text-gray-500 group-hover:text-black transition-colors">All</h1>
+                                            <h1 className="text-xs font-semibold text-gray-500 group-hover:text-black transition-colors">Private</h1>
                                         </div>
                                         <div className="flex items-center justify-center">
                                             <span className="hidden group-hover:inline-flex">
-                                                <Image src="/icons/ellipsis-sidebar.svg" className="bg-gray-100" alt="ellipsis" width={12} height={12} />
+                                                <Image src="/icons/ellipsis-sidebar.svg" className="bg-gray-100 mr-2" alt="ellipsis" width={18} height={18} />
+                                                <Image src="/icons/plusGray.svg" className="bg-gray-100" alt="plus" width={18} height={18} />
                                             </span>
                                         </div>
                                     </div>
@@ -80,8 +81,8 @@ const myHub = () => {
                 </ResizablePanel>
                 <ResizableHandle />
 
-                <ResizablePanel className="bg-white min-w-[50]">
-                    <div className="h-15 border-b flex row items-center gap-2 px-8 justify-between">
+                <ResizablePanel className="bg-white min-w-[50] flex flex-col">
+                    <div className="flex-shrink-0 border-b flex row items-center gap-2 px-8 justify-between py-4">
                         <div className="flex items-center gap-2">
                             <Image src="/icons/house.svg" alt="Overview" width={24} height={24} />
                             <h1 className="text-lg font-bold text-gray-800">Home</h1>
@@ -96,14 +97,14 @@ const myHub = () => {
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <ScrollArea dir="ltr" className="h-full w-full px-32 py-8">
+                    <div className="flex-1 overflow-y-auto">
+                        <div className="px-36 py-8 lg:px-48">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <Image src="/icons/active.svg" alt="Star" width={24} height={24} />
                                     <h1 className="text-sm font-bold text-gray-800">Active Projects</h1>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4 mt-2 w-full h-full">
+                                <div className="mt-2">
                                     <WidgetGrid />
                                 </div>
                                 <div className="mt-8">
@@ -114,7 +115,7 @@ const myHub = () => {
                                     <KanbanBoard />
                                 </div>
                             </div>
-                        </ScrollArea>
+                        </div>
                     </div>
                 </ResizablePanel>
             </ResizablePanelGroup>
