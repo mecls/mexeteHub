@@ -90,16 +90,16 @@ const myHub = () => {
                                         <div className="flex items-center justify-center cursor-pointer">
                                             <span className="hidden group-hover:inline-flex ">
                                                 <Image src="/icons/ellipsis-sidebar.svg" className="bg-gray-100 mr-2 cursor-pointer" alt="ellipsis" width={18} height={18} />
-                                                <button onClick={() => setIsModalOpen(true)} className='cursor-pointer'>
-                                                <Image src="/icons/plusGray.svg" alt="add project" width={18} height={18} />
+                                                <button onClick={() => setIsModalOpen(true)} className='cursor-pointer' name='add project'>
+                                                    <Image src="/icons/plusGray.svg" alt="add project" width={18} height={18} />
                                                 </button>
-                                                {isModalOpen && <CreateProjectModal  onClose={() => setIsModalOpen(false)} />}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
                             </SidebarGroupContent>
                         </SidebarGroup>
+                        {isModalOpen && <CreateProjectModal onClose={() => setIsModalOpen(false)} />}
                         <SidebarFooter className="flex items-center justify-between gap-2 py-1 px-2 hover:bg-gray-100 rounded cursor-pointer w-full">
                             <div className="flex items-center gap-1 py-1 px-1 hover:bg-gray-100 rounded cursor-pointer w-full overflow-hidden ">
                                 <Image src="/icons/settings.svg" alt="Settings" width={16} height={16} />

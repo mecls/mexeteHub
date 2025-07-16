@@ -43,13 +43,21 @@ function Widget({ id, children, onClick }: { id: string; children: React.ReactNo
         alignItems: 'center',
         justifyContent: 'center'
     };
+    
+    const handleWidgetClick = (e: React.MouseEvent) => {
+        // Only trigger if the click is not on a button
+        if (!(e.target as Element).closest('button')) {
+            onClick?.();
+        }
+    };
+    
     return (
         <div
             ref={setNodeRef}
             style={style}
             {...attributes}
             {...listeners}
-            onClick={onClick}
+            onClick={handleWidgetClick}
             className="cursor-pointer"
         >
             {children}
@@ -133,7 +141,17 @@ export default function WidgetGrid() {
     };
 
     const handleProjectClick = (projectId: string) => {
-        router.push(`/myhub/${projectId}`);
+        console.log('Navigating to project:', projectId);
+        console.log('Current router:', router);
+        
+        // Try using window.location as a fallback
+        try {
+            router.push(`/myhub/${projectId}`);
+        } catch (error) {
+            console.error('Router error:', error);
+            // Fallback to window.location
+            window.location.href = `/myhub/${projectId}`;
+        }
     };
 
     if (loading) {
@@ -155,6 +173,70 @@ export default function WidgetGrid() {
             </div>
         );
     }
+    if (projects.length < 3 && projects.length > 0) {
+        return (
+            <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToParentElement]}
+            onDragEnd={(event: any) => {
+                const { active, over } = event;
+                if (active.id !== over.id) {
+                    setProjects(projects => {
+                        const oldIndex = projects.findIndex(project => project.id === active.id);
+                        const newIndex = projects.findIndex(project => project.id === over.id);
+                        return arrayMove(projects, oldIndex, newIndex);
+                    });
+                }
+            }}
+        >
+            <SortableContext items={projects} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-2 gap-8 mt-8 w-fit mb-32">
+                    {projects.map(project => (
+                        <Widget
+                            key={project.id}
+                            id={project.id}
+                            onClick={() => handleProjectClick(project.id)}
+                        >
+                            <div className="flex flex-col w-full h-full">
+                                <div className="flex flex-row justify-between items-center">
+                                    <div className="flex flex-row items-center gap-2">
+                                        <h1 className="text-2xl">{project.icon}</h1>
+                                        <h1 className="text-md font-bold">{project.name}</h1>
+                                    </div>
+                                    {project.status && (
+                                        <div className={`flex flex-row justify-center items-center rounded-full px-2 py-1 ${statusBgClasses[project.status.name as keyof typeof statusBgClasses] || 'bg-gray-100'}`}>
+                                            <p className="text-xs text-gray-500">{project.status.name}</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex flex-row justify-between mt-2">
+                                    <Progress value={project.progress} className="w-full bg-gray-100" />
+                                </div>
+                                <div className="flex flex-row justify-end py-12">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="text-xs text-gray-500 w-1/2 items-center justify-center cursor-pointer" 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation(); // Prevent triggering the widget click
+                                            console.log('Open button clicked for project:', project.id);
+                                            handleProjectClick(project.id);
+                                        }}
+                                    >
+                                        Open
+                                    </Button>
+                                </div>
+                            </div>
+                        </Widget>
+                    ))}
+                </div>
+            </SortableContext>
+        </DndContext>
+        );
+    }
+
 
     return (
         <DndContext
@@ -196,7 +278,17 @@ export default function WidgetGrid() {
                                     <Progress value={project.progress} className="w-full bg-gray-100" />
                                 </div>
                                 <div className="flex flex-row justify-end py-12">
-                                    <Button variant="outline" size="sm" className="text-xs text-gray-500 w-1/2 items-center justify-center">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="text-xs text-gray-500 w-1/2 items-center justify-center cursor-pointer" 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation(); // Prevent triggering the widget click
+                                            console.log('Open button clicked for project:', project.id);
+                                            handleProjectClick(project.id);
+                                        }}
+                                    >
                                         Open
                                     </Button>
                                 </div>
