@@ -2,18 +2,39 @@
 
 import { ResizableHandle, ResizablePanel } from '@/components/ui/resizable'
 import { ResizablePanelGroup } from '@/components/ui/resizable'
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader } from '@/components/ui/sidebar'
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import WidgetGrid from '@/components/ui/widgetGrid';
 import KanbanBoard from '@/components/ui/KanbanBoard';
+import { useUser } from '@/contexts/UserContext';
+import CreateProjectModal from '@/components/CreateProjectModal';
 
 const myHub = () => {
     const pathname = usePathname();
+    const router = useRouter();
+    const { user, loading: userLoading, error: userError } = useUser();
     const isHome = pathname === '/myhub/';
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    if (userLoading) {
+        return (
+            <div className="h-screen w-screen flex items-center justify-center">
+                <div className="text-gray-500">Loading...</div>
+            </div>
+        );
+    }
+
+    if (userError || !user) {
+        return (
+            <div className="h-screen w-screen flex items-center justify-center">
+                <div className="text-gray-500">No user found. Please create a user first.</div>
+            </div>
+        );
+    }
 
     return (
         <div className="h-screen w-screen">
@@ -28,12 +49,12 @@ const myHub = () => {
                         <SidebarHeader>
                             <div className="group flex mt-2 items-center gap-2 py-1 px-1 hover:bg-gray-100 rounded cursor-pointer w-full">
                                 <Avatar className="w-8 h-8 rounded-full overflow-hidden">
-                                    <AvatarImage className="w-full h-full object-cover" src="/profilePic.png" />
-                                    <AvatarFallback>MC</AvatarFallback>
+                                    <AvatarImage className="w-full h-full object-cover" src={user.avatar_url || "/profilePic.png"} />
+                                    <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col justify-center">
-                                    <h1 className="text-sm font-medium">Miguel Carvalhal</h1>
-                                    <p className="text-xs font-medium text-gray-500">@mecls</p>
+                                    <h1 className="text-sm font-medium">{user.name}</h1>
+                                    <p className="text-xs font-medium text-gray-500">@{user.username}</p>
                                 </div>
                                 <span className="hidden group-hover:inline-flex ml-auto">
                                     <Image src="/icons/edit.svg" className="bg-gray-100" alt="edit" width={16} height={16} />
@@ -41,9 +62,14 @@ const myHub = () => {
                             </div>
                         </SidebarHeader>
                         <SidebarGroup>
-                            <SidebarGroupLabel className="flex items-center gap-1 hover:bg-gray-100 rounded cursor-pointer w-full">
-                                <Image src="/icons/bi_house.svg" alt="Overview" width={22} height={22} />
-                                <h1 className="text-sm font-bold text-gray-500">Home</h1>
+                            <SidebarGroupLabel 
+                                className="flex items-center gap-1 hover:bg-gray-100 rounded cursor-pointer w-full"
+                                onClick={() => router.push('/myhub')}
+                            >
+                                <div className="flex items-center gap-1 justify-baseline">
+                                    <Image src="/icons/bi_house.svg" alt="Overview" width={18} height={18} />
+                                    <h1 className="text-sm font-bold text-gray-500">Home</h1>
+                                </div>
                             </SidebarGroupLabel>
                             <SidebarGroupContent>
                                 <div className="flex flex-col gap-4 py-8">
@@ -61,10 +87,13 @@ const myHub = () => {
                                         <div className="flex items-center gap-2">
                                             <h1 className="text-xs font-semibold text-gray-500 group-hover:text-black transition-colors">Private</h1>
                                         </div>
-                                        <div className="flex items-center justify-center">
-                                            <span className="hidden group-hover:inline-flex">
-                                                <Image src="/icons/ellipsis-sidebar.svg" className="bg-gray-100 mr-2" alt="ellipsis" width={18} height={18} />
-                                                <Image src="/icons/plusGray.svg" className="bg-gray-100" alt="plus" width={18} height={18} />
+                                        <div className="flex items-center justify-center cursor-pointer">
+                                            <span className="hidden group-hover:inline-flex ">
+                                                <Image src="/icons/ellipsis-sidebar.svg" className="bg-gray-100 mr-2 cursor-pointer" alt="ellipsis" width={18} height={18} />
+                                                <button onClick={() => setIsModalOpen(true)} className='cursor-pointer'>
+                                                <Image src="/icons/plusGray.svg" alt="add project" width={18} height={18} />
+                                                </button>
+                                                {isModalOpen && <CreateProjectModal  onClose={() => setIsModalOpen(false)} />}
                                             </span>
                                         </div>
                                     </div>
@@ -83,7 +112,7 @@ const myHub = () => {
 
                 <ResizablePanel className="bg-white min-w-[50] flex flex-col">
                     <div className="flex-shrink-0 border-b flex row items-center gap-2 px-8 justify-between py-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-baseline gap-2">
                             <Image src="/icons/house.svg" alt="Overview" width={24} height={24} />
                             <h1 className="text-lg font-bold text-gray-800">Home</h1>
                         </div>
@@ -102,7 +131,7 @@ const myHub = () => {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <Image src="/icons/active.svg" alt="Star" width={24} height={24} />
-                                    <h1 className="text-sm font-bold text-gray-800">Active Projects</h1>
+                                    <h1 className="text-xl font-bold text-gray-800">Active Projects</h1>
                                 </div>
                                 <div className="mt-2">
                                     <WidgetGrid />
@@ -110,7 +139,7 @@ const myHub = () => {
                                 <div className="mt-8">
                                     <div className="flex items-center gap-2">
                                         <Image src="/icons/kanban.svg" alt="Star" width={24} height={24} />
-                                        <h1 className="text-sm font-bold text-gray-800">Board</h1>
+                                        <h1 className="text-xl font-bold text-gray-800">Board</h1>
                                     </div>
                                     <KanbanBoard />
                                 </div>

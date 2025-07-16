@@ -8,6 +8,7 @@ import {
 } from "../../fonts/font";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
+import { UserProvider } from "@/contexts/UserContext";
 
 export const metadata: Metadata = {
   title: "Mexete Hub",
@@ -27,7 +28,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${interBold.variable} ${interMedium.variable} ${interSemiBold.variable} ${interLight.variable} antialiased`}
       >
-        {children}
+        <UserProvider>
+          {children}
+        </UserProvider>
         <Analytics />
       </body>
     </html>
