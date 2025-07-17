@@ -133,7 +133,7 @@ const myHub = () => {
                                     <Image src="/icons/active.svg" alt="Star" width={24} height={24} />
                                     <h1 className="text-xl font-bold text-gray-800">Active Projects</h1>
                                 </div>
-                                <div className="mt-2">
+                                <div className="mt-8">
                                     <WidgetGrid />
                                 </div>
                                 <div className="mt-8">

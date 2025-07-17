@@ -25,6 +25,7 @@ import { useUser } from '@/contexts/UserContext';
 // Widget component
 function Widget({ id, children, onClick }: { id: string; children: React.ReactNode; onClick?: () => void }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
@@ -41,16 +42,17 @@ function Widget({ id, children, onClick }: { id: string; children: React.ReactNo
         cursor: 'grab',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        position: 'relative' as const,
     };
-    
+
     const handleWidgetClick = (e: React.MouseEvent) => {
         // Only trigger if the click is not on a button
         if (!(e.target as Element).closest('button')) {
             onClick?.();
         }
     };
-    
+
     return (
         <div
             ref={setNodeRef}
@@ -143,7 +145,7 @@ export default function WidgetGrid() {
     const handleProjectClick = (projectId: string) => {
         console.log('Navigating to project:', projectId);
         console.log('Current router:', router);
-        
+
         // Try using window.location as a fallback
         try {
             router.push(`/myhub/${projectId}`);
@@ -176,64 +178,70 @@ export default function WidgetGrid() {
     if (projects.length < 3 && projects.length > 0) {
         return (
             <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            modifiers={[restrictToParentElement]}
-            onDragEnd={(event: any) => {
-                const { active, over } = event;
-                if (active.id !== over.id) {
-                    setProjects(projects => {
-                        const oldIndex = projects.findIndex(project => project.id === active.id);
-                        const newIndex = projects.findIndex(project => project.id === over.id);
-                        return arrayMove(projects, oldIndex, newIndex);
-                    });
-                }
-            }}
-        >
-            <SortableContext items={projects} strategy={rectSortingStrategy}>
-                <div className="grid grid-cols-2 gap-8 mt-8 w-fit mb-32">
-                    {projects.map(project => (
-                        <Widget
-                            key={project.id}
-                            id={project.id}
-                            onClick={() => handleProjectClick(project.id)}
-                        >
-                            <div className="flex flex-col w-full h-full">
-                                <div className="flex flex-row justify-between items-center">
-                                    <div className="flex flex-row items-center gap-2">
-                                        <h1 className="text-2xl">{project.icon}</h1>
-                                        <h1 className="text-md font-bold">{project.name}</h1>
-                                    </div>
-                                    {project.status && (
-                                        <div className={`flex flex-row justify-center items-center rounded-full px-2 py-1 ${statusBgClasses[project.status.name as keyof typeof statusBgClasses] || 'bg-gray-100'}`}>
-                                            <p className="text-xs text-gray-500">{project.status.name}</p>
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                modifiers={[restrictToParentElement]}
+                onDragEnd={(event: any) => {
+                    const { active, over } = event;
+                    if (active.id !== over.id) {
+                        setProjects(projects => {
+                            const oldIndex = projects.findIndex(project => project.id === active.id);
+                            const newIndex = projects.findIndex(project => project.id === over.id);
+                            return arrayMove(projects, oldIndex, newIndex);
+                        });
+                    }
+                }}
+            >
+                <SortableContext items={projects} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 gap-8 mt-8 w-fit mb-32">
+                        {/* FIRST SECTION DEBUG */}
+                        {projects.map(project => (
+                            <Widget
+                                key={project.id}
+                                id={project.id}
+                                onClick={() => handleProjectClick(project.id)}
+                            >
+                                <div className="flex flex-col w-full h-full">
+                                    <div className="flex flex-row justify-between items-center">
+                                        <div className="flex flex-row items-center gap-2">
+                                            <h1 className="text-2xl">{project.icon}</h1>
+                                            <h1 className="text-md font-bold">{project.name}</h1>
                                         </div>
-                                    )}
+                                        {project.status && (
+                                            <div className={`flex flex-row justify-center items-center rounded-full px-2 py-1 ${statusBgClasses[project.status.name as keyof typeof statusBgClasses] || 'bg-gray-100'}`}>
+                                                <p className="text-xs text-gray-500">{project.status.name}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-row justify-between mt-2">
+                                        <Progress value={project.progress} className="w-full bg-gray-100" />
+                                    </div>
+                                    <div className="flex flex-row justify-end py-12">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-xs text-gray-500 w-1/2 flex items-center justify-center cursor-pointer border-gray-300 rounded px-2 py-1 hover:bg-gray-50"
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevent widget click
+                                                handleProjectClick(project.id);
+                                            }}
+                                            onMouseDown={(e) => {
+                                                e.stopPropagation(); // Prevent drag start
+                                            }}
+                                            onPointerDown={(e) => {
+                                                e.stopPropagation(); // Prevent drag start
+                                            }}
+                                            draggable={false}
+                                        >
+                                            Open
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="flex flex-row justify-between mt-2">
-                                    <Progress value={project.progress} className="w-full bg-gray-100" />
-                                </div>
-                                <div className="flex flex-row justify-end py-12">
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="text-xs text-gray-500 w-1/2 items-center justify-center cursor-pointer" 
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation(); // Prevent triggering the widget click
-                                            console.log('Open button clicked for project:', project.id);
-                                            handleProjectClick(project.id);
-                                        }}
-                                    >
-                                        Open
-                                    </Button>
-                                </div>
-                            </div>
-                        </Widget>
-                    ))}
-                </div>
-            </SortableContext>
-        </DndContext>
+                            </Widget>
+                        ))}
+                    </div>
+                </SortableContext>
+            </DndContext>
         );
     }
 
@@ -260,7 +268,6 @@ export default function WidgetGrid() {
                         <Widget
                             key={project.id}
                             id={project.id}
-                            onClick={() => handleProjectClick(project.id)}
                         >
                             <div className="flex flex-col w-full h-full">
                                 <div className="flex flex-row justify-between items-center">
@@ -278,16 +285,21 @@ export default function WidgetGrid() {
                                     <Progress value={project.progress} className="w-full bg-gray-100" />
                                 </div>
                                 <div className="flex flex-row justify-end py-12">
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="text-xs text-gray-500 w-1/2 items-center justify-center cursor-pointer" 
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs text-gray-500 w-1/2 flex items-center justify-center cursor-pointer border-gray-300 rounded px-2 py-1 hover:bg-gray-50"
                                         onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation(); // Prevent triggering the widget click
-                                            console.log('Open button clicked for project:', project.id);
+                                            e.stopPropagation(); // Prevent widget click
                                             handleProjectClick(project.id);
                                         }}
+                                        onMouseDown={(e) => {
+                                            e.stopPropagation(); // Prevent drag start
+                                        }}
+                                        onPointerDown={(e) => {
+                                            e.stopPropagation(); // Prevent drag start
+                                        }}
+                                        draggable={false}
                                     >
                                         Open
                                     </Button>

@@ -19,6 +19,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
   useEffect(() => {
     const fetchProject = async () => {
       try {
+        console.log('Fetching project with ID:', projectId);
         const { data, error } = await supabase
           .from('projects')
           .select('*')
@@ -28,6 +29,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
         if (error) {
           console.error('Error fetching project:', error);
         } else {
+          console.log('Project fetched successfully:', data);
           setProject(data);
         }
       } catch (error) {
@@ -41,15 +43,23 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
   }, [projectId]);
 
   if (loading) {
-    return <div className="p-8">Loading project...</div>;
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <div className="text-gray-500">Loading project...</div>
+      </div>
+    );
   }
 
   if (!project) {
-    return <div className="p-8">Project not found</div>;
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <div className="text-gray-500">Project not found</div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-8">
+    <div className="h-screen w-screen p-8">
       <div className="flex items-center gap-4 mb-6">
         <span className="text-4xl">{project.icon}</span>
         <h1 className="text-3xl font-bold">{project.name}</h1>
@@ -64,4 +74,4 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
       </div>
     </div>
   );
-}
+} 
