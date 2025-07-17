@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/supabase';
 import { Project, ProjectWithStatus } from '@/lib/supabase/schema';
 import { useUser } from '@/contexts/UserContext';
+import { useProjects } from '@/contexts/ProjectContext';
 
 // Widget component
 function Widget({ id, children, onClick }: { id: string; children: React.ReactNode; onClick?: () => void }) {
@@ -70,67 +71,9 @@ function Widget({ id, children, onClick }: { id: string; children: React.ReactNo
 // Main grid under Active Projects
 export default function WidgetGrid() {
     const router = useRouter();
-    const { user, loading: userLoading, error: userError } = useUser();
-    const [projects, setProjects] = useState<ProjectWithStatus[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { projects, loading, setCurrentProject, setProjects } = useProjects();
     const [mounted, setMounted] = useState(false);
     const sensors = useSensors(useSensor(PointerSensor));
-
-    const fetchProjects = async () => {
-        if (!user) {
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const { data, error } = await supabase
-                .from('projects')
-                .select(`
-                    *,
-                    status:project_statuses(name)
-                `)
-                .eq('user_id', user.id)
-                .is('archived_at', null)
-                .is('deleted_at', null)
-                .order('is_favorite', { ascending: false })
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Error fetching projects:', error);
-            } else {
-                setProjects(data || []);
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    useEffect(() => {
-        if (mounted && !userLoading) {
-            fetchProjects();
-        }
-    }, [mounted, user, userLoading]);
-
-    if (!mounted || userLoading) return null;
-
-    if (userError || !user) {
-        return (
-            <div className="grid grid-cols-2 gap-8 mt-4 w-fit">
-                <div className="w-64 h-40 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <div className="text-gray-500 text-center">
-                        <p>No user found</p>
-                        <p className="text-sm">Please create a user first</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
 
     const statusBgClasses = {
         'On Track': 'bg-[#CEF2D2]',
@@ -143,28 +86,30 @@ export default function WidgetGrid() {
     };
 
     const handleProjectClick = (projectId: string) => {
-        console.log('Navigating to project:', projectId);
-        console.log('Current router:', router);
-
-        // Try using window.location as a fallback
-        try {
+        const project = projects.find(p => p.id === projectId);
+        if (project) {
+            setCurrentProject(project);
             router.push(`/myhub/${projectId}`);
-        } catch (error) {
-            console.error('Router error:', error);
-            // Fallback to window.location
-            window.location.href = `/myhub/${projectId}`;
         }
     };
 
-    if (loading) {
-        return (
-            <div className="grid grid-cols-2 gap-8 mt-4 w-fit">
-                {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-64 h-40 bg-gray-100 rounded-lg animate-pulse" />
-                ))}
-            </div>
-        );
-    }
+    // Add this function to handle project reordering
+    const handleDragEnd = (event: any) => {
+        const { active, over } = event;
+        if (active.id !== over.id) {
+            const oldIndex = projects.findIndex(project => project.id === active.id);
+            const newIndex = projects.findIndex(project => project.id === over.id);
+            const reorderedProjects = arrayMove(projects, oldIndex, newIndex);
+            setProjects(reorderedProjects);
+        }
+    };
+
+    // Set mounted to true after component mounts
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted || loading) return null;
 
     if (projects.length === 0) {
         return (
@@ -181,16 +126,7 @@ export default function WidgetGrid() {
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 modifiers={[restrictToParentElement]}
-                onDragEnd={(event: any) => {
-                    const { active, over } = event;
-                    if (active.id !== over.id) {
-                        setProjects(projects => {
-                            const oldIndex = projects.findIndex(project => project.id === active.id);
-                            const newIndex = projects.findIndex(project => project.id === over.id);
-                            return arrayMove(projects, oldIndex, newIndex);
-                        });
-                    }
-                }}
+                onDragEnd={handleDragEnd}
             >
                 <SortableContext items={projects} strategy={rectSortingStrategy}>
                     <div className="grid grid-cols-2 gap-8 mt-8 w-fit mb-32">
@@ -251,16 +187,7 @@ export default function WidgetGrid() {
             sensors={sensors}
             collisionDetection={closestCenter}
             modifiers={[restrictToParentElement]}
-            onDragEnd={(event: any) => {
-                const { active, over } = event;
-                if (active.id !== over.id) {
-                    setProjects(projects => {
-                        const oldIndex = projects.findIndex(project => project.id === active.id);
-                        const newIndex = projects.findIndex(project => project.id === over.id);
-                        return arrayMove(projects, oldIndex, newIndex);
-                    });
-                }
-            }}
+            onDragEnd={handleDragEnd}
         >
             <SortableContext items={projects} strategy={rectSortingStrategy}>
                 <div className="grid grid-cols-2 gap-8 mt-4 w-fit">

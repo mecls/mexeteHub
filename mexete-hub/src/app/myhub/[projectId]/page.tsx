@@ -1,77 +1,48 @@
 "use client";
-
-import { supabase } from '@/lib/supabase/supabase'
-import React, { useEffect, useState, use } from 'react'
-import Image from 'next/image'
-
-interface Project {
-  id: string;
-  name: string;
-  icon: string;
-  // Add other project fields as needed
-}
+import React, { use, useEffect } from 'react'
+import { useProjects } from '@/contexts/ProjectContext';
 
 export default function ProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
-  const { projectId } = use(params); // Unwrap the Promise with React.use()
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { projectId } = use(params);
+  const { projects, currentProject, setCurrentProject } = useProjects();
 
   useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        console.log('Fetching project with ID:', projectId);
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('id', projectId)
-          .single();
-
-        if (error) {
-          console.error('Error fetching project:', error);
-        } else {
-          console.log('Project fetched successfully:', data);
-          setProject(data);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setLoading(false);
+    // Set current project if not already set
+    if (!currentProject || currentProject.id !== projectId) {
+      const project = projects.find(p => p.id === projectId);
+      if (project) {
+        setCurrentProject(project);
       }
-    };
+    }
+  }, [projectId, projects, currentProject, setCurrentProject]);
 
-    fetchProject();
-  }, [projectId]);
-
-  if (loading) {
+  if (!currentProject) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading project...</div>
-      </div>
-    );
-  }
-
-  if (!project) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center">
-        <div className="text-gray-500">Project not found</div>
+      <div className="px-36 py-8 lg:px-48">
+        <div className="h-screen w-screen flex items-center justify-center">
+          <div className="text-gray-500">Project not found</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-screen p-8">
-      <div className="flex items-center gap-4 mb-6">
-        <span className="text-4xl">{project.icon}</span>
-        <h1 className="text-3xl font-bold">{project.name}</h1>
-      </div>
-      
-      {/* Add your project content here */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <h2 className="text-xl font-semibold mb-4">Project Details</h2>
-        <p>Project ID: {project.id}</p>
-        <p>Project Name: {project.name}</p>
-        <p>Project Icon: {project.icon}</p>
+    <div className="px-36 py-8 lg:px-48">
+      <div className="h-screen w-screen p-8">
+        <div className="flex items-center gap-4 mb-6">
+          <span className="text-4xl">{currentProject.icon}</span>
+          <h1 className="text-3xl font-bold">{currentProject.name}</h1>
+        </div>
+
+        {/* Add your project content here */}
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <h2 className="text-xl font-semibold mb-4">Project Details</h2>
+          <p>Project ID: {currentProject.id}</p>
+          <p>Project Name: {currentProject.name}</p>
+          <p>Project Icon: {currentProject.icon}</p>
+          <p>Progress: {currentProject.progress}%</p>
+        </div>
       </div>
     </div>
-  );
-} 
+  )
+}

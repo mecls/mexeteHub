@@ -10,8 +10,7 @@ export interface ProjectStatus {
     description?: string;
     status_id?: number;
     progress: number;
-    icon: string;
-    color: string;
+    icon: string | '⚠️';
     is_favorite: boolean;
     due_date?: Date;
     archived_at?: Date;

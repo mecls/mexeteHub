@@ -5,9 +5,13 @@ import EmojiPicker from 'emoji-picker-react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase/supabase';
 import { useUser } from '@/contexts/UserContext';
+import { useProjects } from '@/contexts/ProjectContext';
+import { useRouter } from 'next/navigation';
 
 const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
     const { user } = useUser();
+    const { createProject } = useProjects();
+    const router = useRouter();
     const [projectName, setProjectName] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [emoji, setEmoji] = useState('')
@@ -36,25 +40,18 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
         setIsLoading(true)
 
         try {
-            if (!user) {
-                throw new Error('User not found')
-            }
-            const { data, error } = await supabase
-                .from('projects')
-                .insert({
-                    name: projectName,
-                    user_id: user.id,
-                    icon: emoji,
-                })
-            if (error) {
-                throw new Error('Error creating project')
-            }
-            console.log('Project created:', data)
+            const newProject = await createProject({
+                name: projectName,
+                icon: emoji,
+            });
 
             // Close modal and reset form
             setProjectName('')
             setEmoji('')
             onClose()
+
+            // Navigate to the new project
+            router.push(`/myhub/${newProject.id}`)
         } catch (error) {
             console.error('Error creating project:', error)
         } finally {
@@ -101,15 +98,13 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
         <div 
             className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50'
             onClick={handleBackdropClick}
-            // Remove any mouse event handlers that might interfere
             onMouseLeave={undefined}
             onMouseEnter={undefined}
-            style={{ pointerEvents: 'auto' }} // Ensure pointer events work correctly
+            style={{ pointerEvents: 'auto' }} 
         >
             <div 
                 className='bg-white rounded-sm shadow-xl w-full max-w-2xl mx-4 transform transition-all duration-200 ease-out'
                 onClick={(e) => e.stopPropagation()}
-                // Remove any mouse event handlers from modal content
                 onMouseLeave={undefined}
                 onMouseEnter={undefined}
             >
@@ -122,7 +117,6 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
                                 onMouseEnter={() => setIsHovering(true)}
                                 onMouseLeave={() => setIsHovering(false)}
                             >
-                                {/* Emoji display - now clickable */}
                                 {emoji && (
                                     <button
                                         type='button'
@@ -135,7 +129,6 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
                                     </button>
                                 )}
 
-                                {/* Pick icon button - only visible on hover */}
                                 {isHovering && !emoji && (
                                     <button
                                         type='button'
@@ -149,7 +142,6 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
                                     </button>
                                 )}
 
-                                {/* Input with conditional padding */}
                                 <Input
                                     id='project-name'
                                     type='text'
@@ -189,10 +181,8 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
                             </div>
                         </div>
 
-                        {/* Emoji picker section */}
                         {emoji && (
                             <div className='relative'>
-                                {/* Emoji Picker */}
                                 {isEmojiPickerOpen && (
                                     <div className='emoji-picker-container fixed z-[60]' style={{ bottom: '30vh' }}>
                                         <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-2 ml-24'>
