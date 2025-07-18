@@ -103,12 +103,6 @@ export default function WidgetGrid() {
             setProjects(reorderedProjects);
         }
     };
-    //Only show 4 projects max include a button to open a modal with all projects
-
-    const [showAllProjects, setShowAllProjects] = useState(false);
-    const handleShowAllProjects = () => {
-        setShowAllProjects(true);
-    };
 
     // Set mounted to true after component mounts
     useEffect(() => {
@@ -116,18 +110,6 @@ export default function WidgetGrid() {
     }, []);
 
     if (!mounted || loading) return null;
-
-    if (projects.length === 0) {
-        return (
-            <div className="grid grid-cols-2 gap-8 mt-4 w-fit">
-                <button className=" w-64 h-40 mt-3 p-2 text-sm text-gray-500 hover:text-gray-700 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex items-center justify-center">
-                    + Add a project
-                </button>
-            </div>
-        );
-    }
-   //IF showAllProjects is true (in the parent component), show all projects
-
     return (
         <DndContext
             sensors={sensors}
@@ -136,8 +118,9 @@ export default function WidgetGrid() {
             onDragEnd={handleDragEnd}
         >
             <SortableContext items={projects} strategy={rectSortingStrategy}>
-                <div className="grid grid-cols-2 gap-8 mt-4 w-fit">
-                    {projects.slice(0, 4).map(project => (
+                {/* Remove px-32 and center properly */}
+                <div className="grid grid-cols-2 gap-8 mt-4 w-fit px-32">
+                    {projects.map(project => (
                         <Widget
                             key={project.id}
                             id={project.id}
