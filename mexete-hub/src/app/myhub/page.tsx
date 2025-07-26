@@ -1,10 +1,10 @@
 "use client";
 import React, { useState } from 'react'
 import Image from 'next/image'
-import WidgetGrid from '@/components/ui/widgetGrid';
-import KanbanBoard from '@/components/ui/KanbanBoard';
+import WidgetGrid from '@/components/widgetGrid';
+import KanbanBoard from '@/components/KanbanBoard';
 import { useProjects } from '@/contexts/ProjectContext';
-import AllProjects from '@/components/ui/AllProjects';
+import AllProjects from '@/components/AllProjects';
 
 export default function MyHubPage() {
   const { projects } = useProjects();
@@ -12,7 +12,12 @@ export default function MyHubPage() {
   const handleShowAllProjects = () => {
     setShowAllProjects(true);
   };
-
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close on explicit click on the backdrop, not on any other mouse events
+    if (e.target === e.currentTarget && e.type === 'click') {
+      setShowAllProjects(false);
+    }
+  }
   return (
     <div className="px-36 py-8 lg:px-48">
       <div>
@@ -21,7 +26,7 @@ export default function MyHubPage() {
             <Image src="/icons/active.svg" alt="Star" width={24} height={24} />
             <h1 className="text-xl font-bold text-gray-800">Active Projects</h1>
           </div>
-          <div className="flex items-center cursor-pointer hover:bg-gray-100 rounded p-1 ">
+          <div className="flex items-center cursor-pointer hover:bg-gray-100 rounded p-1">
             <Image src="/icons/light_pan-zoom.svg" alt="ellipsis" width={18} height={18} onClick={handleShowAllProjects} />
           </div>
         </div>
@@ -39,16 +44,11 @@ export default function MyHubPage() {
 
       {/* All Projects Modal */}
       {showAllProjects && (
-        <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 w-full ' >
+        <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 w-full ' 
+        onClick={handleBackdropClick}>
           <div className="bg-white rounded-lg p-8 h-3/4 overflow-y-auto w-1/2">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold text-gray-800">All Projects</h1>
-              <button
-                onClick={() => setShowAllProjects(false)}
-                className="p-2 hover:bg-gray-100 rounded"
-              >
-                <Image src="/icons/close.svg" alt="Close" width={24} height={24} />
-              </button>
             </div>
             <AllProjects />
           </div>

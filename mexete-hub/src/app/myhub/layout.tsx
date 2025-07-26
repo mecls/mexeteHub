@@ -9,13 +9,33 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 import { useProjects } from '@/contexts/ProjectContext';
 import CreateProjectModal from '@/components/CreateProjectModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Star, Trash2, Edit, ArrowRight } from 'lucide-react';
 
 export default function MyHubLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, loading: userLoading, error: userError } = useUser();
-  const { projects, currentProject, setCurrentProject } = useProjects();
+  const { projects, currentProject, setCurrentProject, updateProject, deleteProject } = useProjects();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPrivateExpanded, setIsPrivateExpanded] = useState(false);
+  const [renamingProjectId, setRenamingProjectId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+
+  const statusBgClasses = {
+    'On Track': 'bg-[#CEF2D2]',
+    'Behind': 'bg-[#FFF4C7]',
+    'At Risk': 'bg-[#FFC7C7]',
+    'Ahead': 'bg-[#C7DFFF]',
+    'No Status': 'bg-gray-100',
+    'Paused': 'bg-gray-200',
+    'Sold': 'bg-[#D8C7FF]',
+  };
 
   const handleProjectClick = (projectId: string) => {
     const project = projects.find(p => p.id === projectId);
@@ -36,6 +56,55 @@ export default function MyHubLayout({ children }: { children: React.ReactNode })
       return;
     }
     setIsPrivateExpanded(!isPrivateExpanded);
+  };
+
+  const handleFavoriteToggle = async (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (project) {
+      try {
+        await updateProject(projectId, { is_favorite: !project.is_favorite });
+      } catch (error) {
+        console.error('Error toggling favorite:', error);
+      }
+    }
+  };
+
+  const handleMoveToTrash = async (projectId: string) => {
+    try {
+      await deleteProject(projectId);
+    } catch (error) {
+      console.error('Error moving to trash:', error);
+    }
+  };
+
+  const handleRenameStart = (project: any) => {
+    setRenamingProjectId(project.id);
+    setRenameValue(project.name);
+  };
+
+  const handleRenameSave = async (projectId: string) => {
+    if (renameValue.trim()) {
+      try {
+        await updateProject(projectId, { name: renameValue.trim() });
+      } catch (error) {
+        console.error('Error renaming project:', error);
+      }
+    }
+    setRenamingProjectId(null);
+    setRenameValue('');
+  };
+
+  const handleRenameCancel = () => {
+    setRenamingProjectId(null);
+    setRenameValue('');
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent, projectId: string) => {
+    if (e.key === 'Enter') {
+      handleRenameSave(projectId);
+    } else if (e.key === 'Escape') {
+      handleRenameCancel();
+    }
   };
 
   if (userLoading) {
@@ -65,7 +134,7 @@ export default function MyHubLayout({ children }: { children: React.ReactNode })
         >
           <SidebarContent>
             <SidebarHeader>
-              <div className="group flex mt-2 items-center gap-2 py-1 px-1 hover:bg-gray-100 rounded cursor-pointer w-full">
+              <div className="group flex mt-2 items-center gap-2 py-2 px-1 hover:bg-gray-100 rounded cursor-pointer w-full">
                 <Avatar className="w-8 h-8 rounded-full overflow-hidden">
                   <AvatarImage className="w-full h-full object-cover" src={user.avatar_url || "/profilePic.png"} />
                   <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
@@ -91,17 +160,8 @@ export default function MyHubLayout({ children }: { children: React.ReactNode })
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <div className="flex flex-col gap-4 py-8">
-                  <div className="group flex items-center justify-between -mb-3 px-2 py-1 rounded cursor-pointer hover:bg-gray-100 ">
-                    <div className="flex items-center gap-2">
-                      <h1 className="text-xs font-semibold text-gray-500 group-hover:text-black transition-colors">Favorites</h1>
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <span className="hidden group-hover:inline-flex">
-                        <Image src="/icons/ellipsis-sidebar.svg" className="bg-gray-100" alt="ellipsis" width={18} height={18} />
-                      </span>
-                    </div>
-                  </div>
-                  <div 
+                  
+                  <div
                     className="group flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-gray-100"
                     onClick={handlePrivateClick}
                   >
@@ -118,16 +178,75 @@ export default function MyHubLayout({ children }: { children: React.ReactNode })
                     </div>
                   </div>
                   {isPrivateExpanded && (
-                    <div className="space-y-0 overflow-y-auto -mt-4">
+                    <div className="space-y-0 overflow-y-auto justify-between -mt-4">
                       {projects.map(project => (
                         <div
                           key={project.id}
-                          className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-gray-100 ${currentProject?.id === project.id ? 'bg-gray-100' : ''
-                            }`}
+                          className={`group flex items-center justify-between mt-1 gap-2 px-2 py-1 rounded cursor-pointer hover:bg-gray-100 w-full ${currentProject?.id === project.id ? 'bg-gray-100' : ''}`}
                           onClick={() => handleProjectClick(project.id)}
                         >
-                          <span className="text-lg">{project.icon}</span>
-                          <span className="text-sm text-gray-700 truncate font-semibold">{project.name}</span>
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-md flex-shrink-0">{project.icon}</span>
+                            {renamingProjectId === project.id ? (
+                              <input
+                                type="text"
+                                value={renameValue}
+                                onChange={(e) => setRenameValue(e.target.value)}
+                                onKeyDown={(e) => handleRenameKeyDown(e, project.id)}
+                                onBlur={() => handleRenameSave(project.id)}
+                                className="text-sm text-gray-700 font-semibold bg-transparent border-none outline-none flex-1 min-w-0"
+                                autoFocus
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            ) : (
+                              <span className="text-sm text-gray-700 truncate font-semibold flex-1 min-w-0">{project.name}</span>
+                            )}
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className="inline-flex p-1 hover:bg-gray-200 rounded"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                              >
+                                <Image src="/icons/ellipsis-sidebar.svg" alt="ellipsis" width={18} height={18} />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent 
+                              side="bottom" 
+                              align="start" 
+                              sideOffset={4}
+                              className="w-48 z-50"
+                            >
+                              <DropdownMenuItem >
+                                {project.name}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                handleFavoriteToggle(project.id);
+                              }}>
+                               <ArrowRight className="w-4 h-4 mr-2" />
+                                Move To
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                handleRenameStart(project);
+                              }}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Rename
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  handleMoveToTrash(project.id);
+                                }}
+                                className="text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Move to trash
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       ))}
                     </div>
@@ -149,17 +268,22 @@ export default function MyHubLayout({ children }: { children: React.ReactNode })
         <ResizablePanel className="bg-white min-w-[50] flex flex-col">
           <div className="flex-shrink-0 border-b flex row items-center gap-2 px-8 justify-between py-4">
             <div className="flex items-center justify-baseline gap-2">
-              {currentProject ? (
-                <>
-                  <span className="text-xl">{currentProject.icon}</span>
-                  <h1 className="text-lg font-bold text-gray-800">{currentProject.name}</h1>
-                </>
-              ) : (
-                <>
-                  <Image src="/icons/house.svg" alt="Overview" width={24} height={24} />
-                  <h1 className="text-lg font-bold text-gray-800">Home</h1>
-                </>
-              )}
+              {(() => {
+                return currentProject ? (
+                  <>
+                    <span className="text-xl">{currentProject.icon}</span>
+                    <h1 className="text-lg font-bold text-gray-800">{currentProject.name}</h1>
+                    <div className={`flex items-center justify-center gap-2 rounded-full px-2 py-1 ${statusBgClasses[currentProject.status?.name as keyof typeof statusBgClasses] || 'bg-gray-100'}`}>
+                      <p className="text-[10px] font-medium text-gray-500">{currentProject.status?.name}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Image src="/icons/house.svg" alt="Overview" width={24} height={24} />
+                    <h1 className="text-lg font-bold text-gray-800">Home</h1>
+                  </>
+                );
+              })()}
             </div>
             <div className="flex items-center mr-4">
               <p className="text-sm font-medium mr-4 py-1 px-2 hover:bg-gray-100 rounded cursor-pointer">Share</p>

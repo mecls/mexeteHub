@@ -15,14 +15,15 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React, { useState, useEffect } from 'react';
-import { Button } from './button';
-import { Progress } from './progress';
+import { Button } from './ui/button';
+import { Progress } from './ui/progress';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/supabase';
 import { Project, ProjectWithStatus } from '@/lib/supabase/schema';
 import { useUser } from '@/contexts/UserContext';
 import Image from 'next/image';
 import { useProjects } from '@/contexts/ProjectContext';
+import CreateProjectModal from './CreateProjectModal';
 
 // Widget component
 function Widget({ id, children, onClick }: { id: string; children: React.ReactNode; onClick?: () => void }) {
@@ -74,15 +75,21 @@ export default function WidgetGrid() {
     const { projects, loading, setCurrentProject, setProjects } = useProjects();
     const [mounted, setMounted] = useState(false);
     const sensors = useSensors(useSensor(PointerSensor));
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+
+    const activeProjects = projects.filter(project => {
+        if (!project.status) return false;
+        const activeStatusNames = ['Behind', 'Ahead', 'At Risk', 'On Track'];
+        return activeStatusNames.includes(project.status.name);
+    });
+
 
     const statusBgClasses = {
         'On Track': 'bg-[#CEF2D2]',
         'Behind': 'bg-[#FFF4C7]',
         'At Risk': 'bg-[#FFC7C7]',
         'Ahead': 'bg-[#C7DFFF]',
-        'No Status': 'bg-gray-100',
-        'Paused': 'bg-gray-200',
-        'Sold': 'bg-green-100',
     };
 
     const handleProjectClick = (projectId: string) => {
@@ -103,12 +110,6 @@ export default function WidgetGrid() {
             setProjects(reorderedProjects);
         }
     };
-    //Only show 4 projects max include a button to open a modal with all projects
-
-    const [showAllProjects, setShowAllProjects] = useState(false);
-    const handleShowAllProjects = () => {
-        setShowAllProjects(true);
-    };
 
     // Set mounted to true after component mounts
     useEffect(() => {
@@ -120,13 +121,14 @@ export default function WidgetGrid() {
     if (projects.length === 0) {
         return (
             <div className="grid grid-cols-2 gap-8 mt-4 w-fit">
-                <button className=" w-64 h-40 mt-3 p-2 text-sm text-gray-500 hover:text-gray-700 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex items-center justify-center">
+                <button onClick={() => setIsModalOpen(true)}  className=" w-64 h-40 mt-3 p-2 text-sm text-gray-500 hover:text-gray-700 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex items-center justify-center">
                     + Add a project
                 </button>
+                {isModalOpen && <CreateProjectModal onClose={() => setIsModalOpen(false)} />}
             </div>
         );
     }
-   //IF showAllProjects is true (in the parent component), show all projects
+    //IF showAllProjects is true (in the parent component), show all projects
 
     return (
         <DndContext
@@ -137,7 +139,7 @@ export default function WidgetGrid() {
         >
             <SortableContext items={projects} strategy={rectSortingStrategy}>
                 <div className="grid grid-cols-2 gap-8 mt-4 w-fit">
-                    {projects.slice(0, 4).map(project => (
+                    {activeProjects.slice(0, 4).map(project => (
                         <Widget
                             key={project.id}
                             id={project.id}
@@ -150,7 +152,7 @@ export default function WidgetGrid() {
                                     </div>
                                     {project.status && (
                                         <div className={`flex flex-row justify-center items-center rounded-full px-2 py-1 ${statusBgClasses[project.status.name as keyof typeof statusBgClasses] || 'bg-gray-100'}`}>
-                                            <p className="text-xs text-gray-500">{project.status.name}</p>
+                                            <p className="text-[10px] text-gray-500">{project.status.name}</p>
                                         </div>
                                     )}
                                 </div>

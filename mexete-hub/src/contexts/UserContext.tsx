@@ -54,7 +54,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       if (error) {
         throw error;
       }
-
       if (data) {
         setUser(data);
       } else {

@@ -15,8 +15,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React, { useState, useEffect } from 'react';
-import { Button } from './button';
-import { Progress } from './progress';
+import { Button } from './ui/button';
+import { Progress } from './ui/progress';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/supabase';
 import { Project, ProjectWithStatus } from '@/lib/supabase/schema';
@@ -70,8 +70,7 @@ function Widget({ id, children, onClick }: { id: string; children: React.ReactNo
 
 // Main grid under Active Projects
 export default function WidgetGrid() {
-    const router = useRouter();
-    const { projects, loading, setCurrentProject, setProjects } = useProjects();
+    const { projects, loading, setProjects } = useProjects();
     const [mounted, setMounted] = useState(false);
     const sensors = useSensors(useSensor(PointerSensor));
 
@@ -82,17 +81,8 @@ export default function WidgetGrid() {
         'Ahead': 'bg-[#C7DFFF]',
         'No Status': 'bg-gray-100',
         'Paused': 'bg-gray-200',
-        'Sold': 'bg-green-100',
+        'Sold': 'bg-[#D8C7FF]',
     };
-
-    const handleProjectClick = (projectId: string) => {
-        const project = projects.find(p => p.id === projectId);
-        if (project) {
-            setCurrentProject(project);
-            router.push(`/myhub/${projectId}`);
-        }
-    };
-
     // Add this function to handle project reordering
     const handleDragEnd = (event: any) => {
         const { active, over } = event;
@@ -110,6 +100,15 @@ export default function WidgetGrid() {
     }, []);
 
     if (!mounted || loading) return null;
+    
+    // Debug: Log the first project to see what data we have
+    if (projects.length > 0) {
+        console.log('First project data:', projects[0]);
+        console.log('Project status:', projects[0].status);
+        console.log('Project status_id:', projects[0].status_id);
+        console.log('All projects status_ids:', projects.map(p => ({ id: p.id, name: p.name, status_id: p.status_id, status: p.status })));
+    }
+    
     return (
         <DndContext
             sensors={sensors}
@@ -133,32 +132,12 @@ export default function WidgetGrid() {
                                     </div>
                                     {project.status && (
                                         <div className={`flex flex-row justify-center items-center rounded-full px-2 py-1 ${statusBgClasses[project.status.name as keyof typeof statusBgClasses] || 'bg-gray-100'}`}>
-                                            <p className="text-xs text-gray-500">{project.status.name}</p>
+                                            <p className="text-[10px] text-gray-500">{project.status.name}</p>
                                         </div>
                                     )}
                                 </div>
                                 <div className="flex flex-row justify-between mt-2">
                                     <Progress value={project.progress} className="w-full bg-gray-100" />
-                                </div>
-                                <div className="flex flex-row justify-end py-12">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-xs text-gray-500 w-1/2 flex items-center justify-center cursor-pointer border-gray-300 rounded px-2 py-1 hover:bg-gray-50"
-                                        onClick={(e) => {
-                                            e.stopPropagation(); // Prevent widget click
-                                            handleProjectClick(project.id);
-                                        }}
-                                        onMouseDown={(e) => {
-                                            e.stopPropagation(); // Prevent drag start
-                                        }}
-                                        onPointerDown={(e) => {
-                                            e.stopPropagation(); // Prevent drag start
-                                        }}
-                                        draggable={false}
-                                    >
-                                        Open
-                                    </Button>
                                 </div>
                             </div>
                         </Widget>

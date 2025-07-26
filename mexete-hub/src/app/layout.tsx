@@ -6,6 +6,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
 import { UserProvider } from "@/contexts/UserContext";
 import { ProjectProvider } from '@/contexts/ProjectContext';
+import { TaskProvider } from '@/contexts/TaskContext';
 
 export const metadata: Metadata = {
   title: "Mexete Hub",
@@ -22,8 +23,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <UserProvider>
           <ProjectProvider>
-            {children}
-            <Analytics />
+            <TaskProvider>
+              {children}
+              <Analytics />
+            </TaskProvider>
           </ProjectProvider>
         </UserProvider>
       </body>

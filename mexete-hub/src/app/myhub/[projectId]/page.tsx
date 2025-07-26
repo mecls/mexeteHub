@@ -1,20 +1,44 @@
 "use client";
 import React, { use, useEffect } from 'react'
 import { useProjects } from '@/contexts/ProjectContext';
+import { useTasks } from '@/contexts/TaskContext';
+import ProjectKanbanBoard from '@/components/ProjectKanbanBoard';
+import Image from 'next/image';
 
 export default function ProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
   const { projects, currentProject, setCurrentProject } = useProjects();
+  const { setCurrentProjectId, fetchColumnsAndTasks, currentProjectId } = useTasks();
 
   useEffect(() => {
-    // Set current project if not already set
-    if (!currentProject || currentProject.id !== projectId) {
+    // Only set current project if we have a valid projectId
+    if (projectId) {
       const project = projects.find(p => p.id === projectId);
       if (project) {
         setCurrentProject(project);
+      } else {
+        // If projectId exists but project not found, set to null
+        setCurrentProject(null);
       }
+    } else {
+      // If no projectId, we're on home page, so clear currentProject
+      setCurrentProject(null);
     }
-  }, [projectId, projects, currentProject, setCurrentProject]);
+  }, [projectId, projects, setCurrentProject]);
+
+  // Set current project ID in task context
+  useEffect(() => {
+    if (projectId) {
+      setCurrentProjectId(projectId);
+    }
+  }, [projectId, setCurrentProjectId]);
+
+  // Fetch columns and tasks when currentProjectId changes
+  useEffect(() => {
+    if (currentProjectId) {
+      fetchColumnsAndTasks(currentProjectId);
+    }
+  }, [currentProjectId, fetchColumnsAndTasks]);
 
   if (!currentProject) {
     return (
@@ -28,21 +52,11 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
 
   return (
     <div className="px-36 py-8 lg:px-48">
-      <div className="h-screen w-screen p-8">
-        <div className="flex items-center gap-4 mb-6">
-          <span className="text-4xl">{currentProject.icon}</span>
-          <h1 className="text-3xl font-bold">{currentProject.name}</h1>
-        </div>
-
-        {/* Add your project content here */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Project Details</h2>
-          <p>Project ID: {currentProject.id}</p>
-          <p>Project Name: {currentProject.name}</p>
-          <p>Project Icon: {currentProject.icon}</p>
-          <p>Progress: {currentProject.progress}%</p>
-        </div>
-      </div>
+          <div className="flex items-center gap-2">
+            <Image src="/icons/kanban.svg" alt="Star" width={24} height={24} />
+            <h1 className="text-xl font-bold text-gray-800">Board</h1>
+          </div>
+          <ProjectKanbanBoard />
     </div>
   )
 }
